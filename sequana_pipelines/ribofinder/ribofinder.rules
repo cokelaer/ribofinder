@@ -89,17 +89,19 @@ elif get_annot_file().endswith(".gff") or get_annot_file().endswith(".gff3"):
         output:
             fasta = "build_feature_fasta/feature.fasta",
             gff = "build_feature_fasta/feature_rRNA.gff"
+        log:
+            "logs/build_feature_fasta/build_feature_fasta.log"
         params:
            feature = config['general']['rRNA_feature']
         container:
-            config["apptainers"]["bedtools"]
+            config["apptainers"]["sequana_tools"]
         shell:
             """
             # used to be gawk but awk is more generic and available in the container.
-            awk '{{ if ($3=="{params.feature}") print }}' {input.gff} > {output.gff}
+            awk '{{ if ($3=="{params.feature}") print }}' {input.gff} > {output.gff} 2> {log}
             if [ -s {output.gff} ]
             then
-                bedtools getfasta -fi {input.fasta} -bed {output.gff}  -fo {output.fasta}
+                bedtools getfasta -fi {input.fasta} -bed {output.gff}  -fo {output.fasta} >> {log} 2>&1
             else :
                 echo -e ">empty\\nAAAAAAAAAAAAAA" > {output.fasta}
             fi
@@ -110,11 +112,13 @@ elif get_annot_file().endswith(".gff") or get_annot_file().endswith(".gff3"):
             fasta = "build_feature_fasta/feature.fasta"
         output:
             fai = "build_feature_fasta/feature.fasta.fai"
+        log:
+            "logs/samtools_faidx/samtools_faidx.log"
         container:
-            config["apptainers"]["samtools"]
+            config["apptainers"]["sequana_tools"]
         shell:
             """
-            samtools faidx {input.fasta}
+            samtools faidx {input.fasta} > {log} 2>&1
             """
 
 
@@ -130,7 +134,7 @@ rule bowtie1_indexing:
     threads:
         2
     container:
-        config['apptainers']['sequana_ribofinder']
+        config['apptainers']['sequana_tools']
     wrapper:
         f"{manager.wrappers}/wrappers/bowtie1/build"
 
@@ -147,12 +151,14 @@ unaligned due to the many mismatches. So we do not include R2.
 rule unpigz:
     input: manager.getrawdata()
     output: temp("{sample}/unpigz/{sample}.fastq")
+    log:
+        "{sample}/unpigz/unpigz.log"
     threads: 4
     container:
         config['apptainers']['pigz']
     shell:
         """
-        unpigz -p {threads} -fk --stdout {input[0]} > {output}
+        unpigz -p {threads} -fk --stdout {input[0]} > {output} 2> {log}
         """
 
 
@@ -172,7 +178,7 @@ rule bowtie1_mapping_rna:
     threads:
         config['bowtie1_mapping_rna']['threads']
     container:
-        config['apptainers']['sequana_ribofinder']
+        config['apptainers']['sequana_tools']
     wrapper:
         f"{manager.wrappers}/wrappers/bowtie1/align"
 
@@ -262,11 +268,13 @@ rule bam_indexing:
         "{sample}/bowtie1/{sample}.sorted.bam"
     output:
         "{sample}/bowtie1/{sample}.sorted.bam.bai"
+    log:
+        "{sample}/bowtie1/bam_indexing.log"
     container:
-        config['apptainers']['sequana_ribofinder']
+        config['apptainers']['sequana_tools']
     shell:
         """
-        bamtools index -in {input}
+        bamtools index -in {input} > {log} 2>&1
         """
 
 
@@ -311,16 +319,18 @@ rule dot2svg:
         "rulegraph/rulegraph.dot"
     output:
         ".sequana/rulegraph.svg"
+    log:
+        "logs/dot2svg/dot2svg.log"
     container:
         config['apptainers']['graphviz']
     shell:
-        """dot -Tsvg {input} -o {output}"""
+        """dot -Tsvg {input} -o {output} > {log} 2>&1"""
 
 
 
 
 # Those rules takes a couple of seconds so no need for a cluster
-localrules:  rulegraph
+localrules: rulegraph, dot2svg
 
 
 onsuccess:

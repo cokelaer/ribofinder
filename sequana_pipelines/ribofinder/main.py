@@ -107,7 +107,7 @@ def main(**options):
         if options.reference_file:
             cfg.general.reference_file = os.path.abspath(options.reference_file)
 
-    if options["from_project"]:
+    if options.from_project:
         if "--aligner" in sys.argv:
             fill_aligner()
         if "--rRNA-feature" in sys.argv:
@@ -118,7 +118,7 @@ def main(**options):
             fill_genbank_file()
         if "--gff-file" in sys.argv:
             fill_gff_file()
-        if "--reference-fle" in sys.argv:
+        if "--reference-file" in sys.argv:
             fill_reference_file()
 
     else:
@@ -141,7 +141,7 @@ def main(**options):
                 gbk = GenBank(options.genbank_file)
             if options.genbank_file is None and options.gff_file is None:
                 click.echo("Most probably you want to provide an annotation (genbank-file or gff-file)", err=True)
-                sys.exit(0)
+                sys.exit(1)
 
     # finalise the command and save it; copy the snakemake. update the config
     # file and save it.

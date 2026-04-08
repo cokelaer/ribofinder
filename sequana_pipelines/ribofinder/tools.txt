@@ -3,3 +3,5 @@ samtools
 bedtools
 bamtools
 pigz
+graphviz
+multiqc

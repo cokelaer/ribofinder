@@ -3,9 +3,6 @@
 
 type: map
 mapping:
-    "sequana_wrappers":
-        type: str
-        required: true
     "input_directory":
         type: str
         required: True
@@ -15,6 +12,9 @@ mapping:
     "input_pattern":
         type: str
         required: True
+    "exclude_pattern":
+        type: str
+        required: False
     "apptainers":
         type: any
 
@@ -35,17 +35,6 @@ mapping:
                 type: str
             "gff_file":
                 type: str
-
-    'bowtie1_mapping_ref':
-        type: map
-        mapping:
-            "options":
-                type: str
-            "threads":
-                type: int
-                required: True
-                range: { min: 1 }
-
 
     'bowtie1_mapping_rna':
         type: map
