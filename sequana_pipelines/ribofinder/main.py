@@ -48,7 +48,11 @@ help = init_click(
 @include_options_from(ClickInputOptions)
 @include_options_from(ClickGeneralOptions)
 @click.option(
-    "--aligner", "aligner", type=click.Choice(["bowtie1"]), default="bowtie1", help="the alignement tool (bowtie1)"
+    "--aligner",
+    "aligner",
+    type=click.Choice(["bowtie2", "bwa"]),
+    default="bowtie2",
+    help="the alignment tool (bowtie2 or bwa). Default: bowtie2.",
 )
 @click.option(
     "--rRNA-feature",
@@ -87,6 +91,12 @@ def main(**options):
     # --------------------------------------------------------- general
     def fill_aligner():
         cfg.general.aligner = options.aligner
+        # Keep multiqc modules in sync with the selected aligner. bwa has no
+        # dedicated multiqc module, so we rely on samtools stats instead.
+        if options.aligner == "bwa":
+            cfg.multiqc.modules = "samtools"
+        else:
+            cfg.multiqc.modules = "bowtie2"
 
     def fill_rRNA_feature():
         cfg.general.rRNA_feature = options.rRNA_feature
